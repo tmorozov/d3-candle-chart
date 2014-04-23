@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>Zoom + Pan</title>
+<style>
+
+body {
+  position: relative;
+  width: 100%;
+}
+
+svg {
+  font: 10px sans-serif;
+  shape-rendering: crispEdges;
+}
+
+svg.items {
+  overflow: hidden;
+}
+
+rect.mouse {
+  fill: #ddd;
+  opacity: 0.1;
+}
+
+rect.up {
+  fill: #f00;
+}
+
+rect.down {
+  fill: #00f;
+}
+
+line.stem.down {
+  stroke: #00f;
+}
+
+line.stem.up {
+  stroke: #f00;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #fff;
+}
+
+.crosshair {
+  stroke: #aaa;
+  pointer-events: none;
+}
+
+
+/*.crosshair.hidden {
+  display: none;
+}
+*/
+button.js-reset {
+  position: absolute;
+  right: 30px;
+  top: 30px;
+}
+
+button.js-resize {
+  position: absolute;
+  right: 30px;
+  top: 60px;
+}
+
+.candle-chart {
+  width: 70%;
+  height: 400px;
+}
+</style>
+<div class="candle-chart"></div>
+
+<button class="js-reset">Reset</button>
+<button class="js-resize">Resize</button>
+<!-- <script src="http://d3js.org/d3.v3.min.js"></script> -->
+<script src="d3/d3-zoom-pan-extent.js"></script>
+<script src="zoom-pan.js"></script>
