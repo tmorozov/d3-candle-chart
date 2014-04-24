@@ -146,8 +146,7 @@ function runChart(selector) {
   }
 
   function zoomed() {
-    canvas.select(".x.axis").call(xAxis);
-    canvas.select(".y.axis").call(yAxis);
+    updateAxes();
     updateItems();
   }
 
@@ -174,24 +173,24 @@ function runChart(selector) {
         return end-start;
       })
 
+    function lineX(bar) {
+      var start = x(bar[0]);
+      var end = x(bar[0]+60000);
+      var barX = start + (end-start)/2;
+      return barX;      
+    }
+
     lines
-      .attr("x1", function(bar) {
-        var start = x(bar[0]);
-        var end = x(bar[0]+60000);
-        return start + (end-start)/2;
-      })      
-      .attr("x2", function(bar) {
-        var start = x(bar[0]);
-        var end = x(bar[0]+60000);
-        return start + (end-start)/2;
-      })
+      .attr("x1", lineX)
+      .attr("x2", lineX)
       .attr("y1", function(bar){
         return y(bar[2])
       })
       .attr("y2", function(bar){
         return y(bar[3])
-      })
+      });
     //-----
+
   }
 
   function updateCross() {
@@ -236,9 +235,7 @@ function runChart(selector) {
   }
 
   function updateAxes() {
-    items
-      .attr("width", width)
-      .attr("height", height);
+
 
     xAxisG
       .attr("transform", "translate(0," + height + ")")
@@ -262,18 +259,34 @@ function runChart(selector) {
       .on("mousemove", onMousemove);    
   }
 
+  function normalizeX(val) {
+    var res = val;
+    var domainX = x.invert(val);
+    var arr = barsData.bars;
+    var l = arr.length;
+    for(var i=0; i<l; i++) {
+      if(Math.abs(arr[i][0]-domainX) < 30000) {
+        res = x(arr[i][0]+30000);
+        break;
+      }
+    }
+    return res;
+  }
+
   function crossMove() {
     var p = d3.mouse(rect[0][0]);
     var valX = x.invert(p[0]);
     var valY = y.invert(p[1]);
+
 
     xCross
       .attr("transform","translate(0,"+p[1]+")")
     xCross.select("text")
       .text(valY.toFixed(5));
 
+
     yCross
-      .attr("transform","translate("+p[0]+", 0)")
+      .attr("transform","translate("+normalizeX(p[0])+", 0)")
     yCross.select("text")
       .text(timeFormatter(valX));     
   }
