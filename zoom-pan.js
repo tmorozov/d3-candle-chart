@@ -22,10 +22,10 @@ function runChart(selector) {
 
   var timeFormatter = d3.time.format("%Y-%m-%d %H:%M:%S");
 
-  d3.select("button.js-reset").on("click", reset);
-  d3.select("button.js-resize").on("click", resize);
+  d3.select("button.js-reset")
+    .on("click", reset);
   d3.select(window)
-    .on("resize", resize);
+    .on("resize", update);
     
   init();
   update();
@@ -53,7 +53,7 @@ function runChart(selector) {
         var bars;
         var lines;
 
-  function initCross(canvas) {
+  function initCross() {
     xCross = canvas.append("g")
       .attr("class", "x crosshair hidden");
     xCross.append("line")
@@ -85,7 +85,7 @@ function runChart(selector) {
       .attr("height", "18px")   
   }
 
-  function initItems(canvas) {
+  function initItems() {
     items = canvas.append("svg");
     bars = items.selectAll("rect")
       .data(barsData.bars);
@@ -104,7 +104,7 @@ function runChart(selector) {
       });
   }
 
-  function init() {
+  function initScales() {
     // x = d3.scale.linear().domain(domain.x);
     x = d3.time.scale().domain(domain.x);
     y = d3.scale.linear().domain(domain.y).nice();
@@ -117,23 +117,32 @@ function runChart(selector) {
       .scaleExtent([0.2, 2])
       .xExtent([domain.x[0] - 2*domainXdelta , domain.x[1]])
       // .yExtent(domain.y)
-      .on("zoom", zoomed);
+      .on("zoom", zoomed);    
+  }
 
-    chart = d3.select(selector).append("svg");
-    canvas = chart.append("g");
-
+  function initAxes() {
     xAxisG = canvas.append("g")
       .attr("class", "x axis");
 
     yAxisG = canvas.append("g")
       .attr("class", "y axis");
+  }
 
-    initItems(canvas);
-    initCross(canvas);
+  function initCanvas() {
+    chart = d3.select(selector).append("svg");
+    canvas = chart.append("g");
+  }
+
+  function init() {
+    initScales();
+    initCanvas();
+
+    initAxes();
+    initItems();
+    initCross();
 
     rect = canvas.append("rect")
       .attr("class", "mouse");
-
   }
 
   function zoomed() {
@@ -143,6 +152,9 @@ function runChart(selector) {
   }
 
   function updateItems() {
+    items
+      .attr("width", width)
+      .attr("height", height);
     //-----
     bars
       .attr("x", function(bar) {
@@ -194,24 +206,25 @@ function runChart(selector) {
       .attr("y", height);
   }
 
-  function loadDimentions() {
+  function updateDimentions() {
     var el = d3.select(selector);
     dimentions.w = parseFloat(el.style("width"));
     dimentions.h = parseFloat(el.style("height"));
-  }
 
-  function update() {
-    loadDimentions();
     width = dimentions.w - margin.left - margin.right,
     height = dimentions.h - margin.top - margin.bottom;
+  }
 
+  function updateScales() {
     x.range([0, width]);
-    y.range([height, 0]);
+    y.range([height, 0]);  
 
     xAxis.scale(x).tickSize(-height);
     yAxis.scale(y).tickSize(-width);
-    zoom.x(x).y(y);
+    zoom.x(x).y(y);    
+  }
 
+  function updateCanvas() {
     chart
       .attr("width", width + margin.left + margin.right)
       .attr("height", height + margin.top + margin.bottom);
@@ -220,11 +233,9 @@ function runChart(selector) {
       .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
       .call(zoom);
 
-    rect
-      .attr("width", width)
-      .attr("height", height)
-      .on("mousemove", onMousemove);    
+  }
 
+  function updateAxes() {
     items
       .attr("width", width)
       .attr("height", height);
@@ -234,12 +245,24 @@ function runChart(selector) {
       .call(xAxis);
 
     yAxisG.call(yAxis);
-
-    updateItems();
-    updateCross();
   }
 
-  function onMousemove() {
+  function update() {
+    updateDimentions();
+
+    updateScales();
+    updateCanvas();
+    updateAxes();
+    updateItems();
+    updateCross();
+
+    rect
+      .attr("width", width)
+      .attr("height", height)
+      .on("mousemove", onMousemove);    
+  }
+
+  function crossMove() {
     var p = d3.mouse(rect[0][0]);
     var valX = x.invert(p[0]);
     var valY = y.invert(p[1]);
@@ -252,26 +275,22 @@ function runChart(selector) {
     yCross
       .attr("transform","translate("+p[0]+", 0)")
     yCross.select("text")
-      .text(timeFormatter(valX));      
+      .text(timeFormatter(valX));     
   }
 
-  function resize() {
-    // var k = Math.random();
-    // console.log("resize", k);
-    // var w = Math.floor(960*k)+ margin.left + margin.right;
-    // var h = Math.floor(500*k)+ margin.top + margin.bottom;
-    // dimentions = { w: w, h: h };
-    update();
+  function onMousemove() {
+    crossMove();   
   }
+
 
   function reset() {
     d3.transition().duration(750).tween("zoom", function() {
-    var ix = d3.interpolate(x.domain(), domain.x),
-      iy = d3.interpolate(y.domain(), domain.y);
-    return function(t) {
-      zoom.x(x.domain(ix(t))).y(y.domain(iy(t)));
-      zoomed();
-    };
+      var ix = d3.interpolate(x.domain(), domain.x),
+        iy = d3.interpolate(y.domain(), domain.y);
+      return function(t) {
+        zoom.x(x.domain(ix(t))).y(y.domain(iy(t)));
+        zoomed();
+      };
     });
   }
 }
